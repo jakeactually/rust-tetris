@@ -2,31 +2,35 @@ use data::*;
 use piston_window::*;
 
 pub struct Tetris {
-    width: usize,
-    height: usize,
-    tile_size: usize,
+    width: i32,
+    height: i32,
+    tile_size: i32,
     grid: TetrisGrid,
-    colors: [Color; COLORS_AMOUNT],
-    pieces: [Piece; PIECES_AMOUNT],
+    colors: [Color; COLORS_AMOUNT as usize],
+    pieces: [Piece; PIECES_AMOUNT as usize],
     piece: Piece
 }
 
 impl Tetris {
     pub fn new() -> Tetris {
+        let grid = [[0; WIDTH as usize]; HEIGHT as usize];
+        let pieces = get_pieces();
+        let piece = Piece::new(&pieces, &grid);
+
         Tetris {
             width: WIDTH,
             height: HEIGHT,
             tile_size: 40,
-            grid: [[0; WIDTH]; HEIGHT],
+            grid,
             colors: get_colors(),
-            pieces: get_pieces(),
-            piece: Piece::new(&get_pieces(), &[[0; WIDTH]; HEIGHT])
+            pieces,
+            piece
         }
     }
 
     // Plot
 
-    pub fn plot<F>(&self, mut plotter: F) where F: FnMut(usize, usize) {
+    pub fn plot<F>(&self, mut plotter: F) where F: FnMut(i32, i32) {
         for y in 0..self.height {
             for x in 0..self.width {
                plotter(x, y);
@@ -67,9 +71,9 @@ impl Tetris {
 
         for y in 0..piece.height {
             for x in 0..piece.width {
-                let block = piece.grid[y][x];
+                let block = piece.grid[y as usize][x as usize];
                 if block != 0 {
-                    self.grid[piece.y + y][piece.x + x] = block;
+                    self.grid[(piece.y + y) as usize][(piece.x + x) as usize] = block;
                 }
             }
         }
@@ -79,13 +83,13 @@ impl Tetris {
     }
 
     pub fn eval_grid(mut self) -> Tetris {
-        let mut next_grid = [[0; WIDTH]; HEIGHT];
+        let mut next_grid = [[0; WIDTH as usize]; HEIGHT as usize];
         let reverse = self.height - 1;
         let mut i = 0;
 
         for y in 0..self.height {
-            if self.grid[reverse - y].iter().any(|x| x == &0) {
-                next_grid[reverse - i] = self.grid[reverse - y];
+            if self.grid[(reverse - y) as usize].iter().any(|&x| x == 0) {
+                next_grid[(reverse - i) as usize] = self.grid[(reverse - y) as usize];
                 i += 1;
             }
         }
@@ -101,28 +105,33 @@ impl Tetris {
 
     // Draw
 
-    pub fn draw<G: Graphics>(&self, context: &Context, graphics: &mut G) {
+    pub fn draw<G>(&self, context: &Context, graphics: &mut G) where G: Graphics {
         clear(self.get_color(0), graphics);
 
         self.plot(|x, y| {
             let piece = &self.piece;
 
             let color = if piece.has_block(x, y) {
-                self.get_color(piece.grid[y - piece.y][x - piece.x])
+                self.get_color(piece.grid[(y - piece.y) as usize][(x - piece.x) as usize])
             } else {
-                self.get_color(self.grid[y][x])
+                self.get_color(self.grid[y as usize][x as usize])
             };
 
             rectangle(color, self.rect(x, y), context.transform, graphics);
         });
     }
 
-    pub fn get_color(&self, index: usize) -> Color {
-        self.colors[index]
+    pub fn get_color(&self, index: i32) -> Color {
+        self.colors[index as usize]
     }
 
-    pub fn rect(&self, x: usize, y: usize) -> [f64; 4] {
+    pub fn rect(&self, x: i32, y: i32) -> [f64; 4] {
         let tile_size = self.tile_size;
-        [(x * tile_size) as f64, (y * tile_size) as f64, (tile_size - 1) as f64, (tile_size - 1) as f64]
+        [
+            (x * tile_size) as f64,
+            (y * tile_size) as f64,
+            (tile_size - 1) as f64,
+            (tile_size - 1) as f64
+        ]
     }
 }

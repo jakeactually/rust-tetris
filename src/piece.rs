@@ -2,13 +2,13 @@ use data::*;
 use rand;
 
 impl Piece {
-    pub fn new(pieces: &[Piece; PIECES_AMOUNT], tetris_grid: &TetrisGrid) -> Piece {
-        let piece_id = rand::random::<usize>() % PIECES_AMOUNT;
-        let rotations = rand::random::<usize>() % 4 + 1;
-        let color_id = rand::random::<usize>() % (COLORS_AMOUNT - 1) + 1;
+    pub fn new(pieces: &[Piece; PIECES_AMOUNT as usize], tetris_grid: &TetrisGrid) -> Piece {
+        let piece_id = rand::random::<i32>().abs() % PIECES_AMOUNT;
+        let rotations = rand::random::<i32>().abs() % 4 + 1;
+        let color_id = rand::random::<i32>().abs() % (COLORS_AMOUNT - 1) + 1;
 
         let mut piece = Piece {
-            ..pieces[piece_id]
+            ..pieces[piece_id as usize]
         };
 
         for _ in 0..rotations {
@@ -18,9 +18,9 @@ impl Piece {
         piece.set_color(color_id)
     }
 
-    pub fn set_color(mut self, color_id: usize) -> Piece {
-        for y in 0..self.height {
-            for x in 0..self.width {
+    pub fn set_color(mut self, color_id: i32) -> Piece {
+        for y in 0..self.height as usize {
+            for x in 0..self.width as usize {
                 if self.grid[y][x] == 1 {
                     self.grid[y][x] = color_id;
                 }
@@ -32,7 +32,7 @@ impl Piece {
 
     // Plot
 
-    pub fn plot<F>(&self, mut plotter: F) where F: FnMut(usize, usize) {
+    pub fn plot<F>(&self, mut plotter: F) where F: FnMut(i32, i32) {
         for y in 0..self.height {
             for x in 0..self.width {
                plotter(x, y)
@@ -68,11 +68,7 @@ impl Piece {
     }
 
     pub fn try_rotate(self, tetris_grid: &TetrisGrid) -> Piece  {
-        if let Some(piece) = self.maybe_rotate(tetris_grid) {
-            piece
-        } else {
-            self
-        }
+        self.maybe_rotate(tetris_grid).unwrap_or(self)
     }
 
     pub fn maybe_rotate(&self, tetris_grid: &TetrisGrid) -> Option<Piece> {
@@ -83,7 +79,7 @@ impl Piece {
         let mut next_grid = next_piece.grid;
 
         next_piece.plot(|x, y| {
-            next_grid[x][next_piece.height - 1 - y] = next_piece.grid[y][x];
+            next_grid[x as usize][(next_piece.height - 1 - y) as usize] = next_piece.grid[y as usize][x as usize];
         });
 
         let width = next_piece.width;
@@ -106,12 +102,12 @@ impl Piece {
 
     // Math
 
-    pub fn has_block(&self, tetris_x: usize, tetris_y: usize) -> bool {
+    pub fn has_block(&self, tetris_x: i32, tetris_y: i32) -> bool {
         self.has_point(tetris_x, tetris_y) &&
-        self.grid[tetris_y - self.y][tetris_x - self.x] != 0  
+        self.grid[(tetris_y - self.y) as usize][(tetris_x - self.x) as usize] != 0  
     }
 
-    pub fn has_point(&self, tetris_x: usize, tetris_y: usize) -> bool {
+    pub fn has_point(&self, tetris_x: i32, tetris_y: i32) -> bool {
         let &Piece { x, y, width, height, .. } = self;
 
         tetris_x >= x &&
@@ -120,11 +116,11 @@ impl Piece {
         tetris_y < y + height
     }
 
-    pub fn will_collide(&self, next_x: usize, next_y: usize, tetris_grid: &TetrisGrid) -> bool {
+    pub fn will_collide(&self, next_x: i32, next_y: i32, tetris_grid: &TetrisGrid) -> bool {
         let mut will = false;
 
         self.plot(|x, y| {
-            if self.grid[y][x] != 0 && tetris_grid[next_y + y][next_x + x] != 0 {
+            if self.grid[y as usize][x as usize] != 0 && tetris_grid[(next_y + y) as usize][(next_x + x) as usize] != 0 {
                 will = true;
             }
         });

@@ -13,26 +13,26 @@ fn main() {
         .build()
         .unwrap();
 
-    window.window.set_position([1600 / 2 - 400 / 2, 900 / 2 - 600 / 2]);
+    window.window.set_position([(1366 - 400) / 2, (768 - 640) / 2]);
 
     let mut elapsed = 0.0;
     let mut tetris = Tetris::new();
 
     while let Some(event) = window.next() {
-        if let Some(update_args) = event.update_args() {
-            elapsed += update_args.dt;
-            if elapsed > 0.5 {
-                elapsed = 0.0;
-                tetris = tetris.tick();
-            }
-        }
-
-        if let Some(button_args) = event.button_args() {
-            if let ButtonState::Release = button_args.state {
-                if let Button::Keyboard(key) = button_args.button {
+        match event {
+            Event::Loop(Loop::Update(args)) => {
+                elapsed += args.dt;
+                if elapsed > 0.5 {
+                    elapsed = 0.0;
+                    tetris = tetris.tick();
+                }
+            },
+            Event::Input(Input::Button(args)) => {
+                if let (ButtonState::Release, Button::Keyboard(key)) = (args.state, args.button) {
                     tetris = tetris.key(key);
                 }
-            }
+            },
+            _ => ()
         }
 
         window.draw_2d(&event, |context, graphics| {
