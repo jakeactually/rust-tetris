@@ -13,7 +13,7 @@ fn main() {
         .build()
         .unwrap();
 
-    window.window.set_position([(1366 - 400) / 2, (768 - 640) / 2]);
+    window.window.set_position([(1366 - 400) / 2, (768 - 600) / 2 - 20]);
 
     let mut elapsed = 0.0;
     let mut tetris = Tetris::new();
@@ -28,7 +28,9 @@ fn main() {
                 }
             },
             Event::Input(Input::Button(args)) => {
-                if let (ButtonState::Release, Button::Keyboard(key)) = (args.state, args.button) {
+                use ButtonState::Release;
+                use Button::Keyboard;
+                if let ButtonArgs { state: Release, button: Keyboard(key), .. } = args {
                     tetris = tetris.key(key);
                 }
             },
