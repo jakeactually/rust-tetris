@@ -27,7 +27,7 @@ fn main() {
                     tetris = tetris.tick();
                 }
             },
-            Event::Input(Input::Button(args)) => {
+            Event::Input(Input::Button(args), _) => {
                 use ButtonState::Release;
                 use Button::Keyboard;
                 if let ButtonArgs { state: Release, button: Keyboard(key), .. } = args {
@@ -37,7 +37,7 @@ fn main() {
             _ => ()
         }
 
-        window.draw_2d(&event, |context, graphics| {
+        window.draw_2d(&event, |context, graphics, _| {
             tetris.draw(&context, graphics);
         });
     }
